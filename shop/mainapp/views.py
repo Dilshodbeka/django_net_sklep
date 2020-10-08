@@ -2,6 +2,7 @@ from django.shortcuts import render
 from django.contrib.contenttypes.models import ContentType
 from django.http import HttpResponseRedirect
 from django.views.generic import DetailView, View
+
 from .models import Notebook, Smartphone, Category, LatestProducts, Customer, Cart, CartProduct
 from .mixins import CategoryDetailMixin, CartMixin
 
@@ -10,7 +11,7 @@ class BaseView(CartMixin, View):
     def get(self, request, *args, **kwargs):
         categories = Category.objects.get_categories_for_left_sidebar()
         products = LatestProducts.objects.get_products_for_main_page(
-            'notebook', 'smartphone'
+            'notebook', 'smartphone', with_respect_to='notebook'
         )
         context = {
             'categories': categories,
@@ -51,15 +52,31 @@ class CategoryDetailView(CartMixin, CategoryDetailMixin, DetailView):
 
 
 class AddToCartView(CartMixin, View):
+
     def get(self, request, *args, **kwargs):
         ct_model, product_slug = kwargs.get('ct_model'), kwargs.get('slug')
         content_type = ContentType.objects.get(model=ct_model)
-        product = content_type.model_class().objects.get_or_create(slug=product_slug)
-        cart_product, created = CartProduct.objects.create(
+        product = content_type.model_class().objects.get(slug=product_slug)
+        cart_product, created = CartProduct.objects.get_or_create(
             user=self.cart.owner, cart=self.cart, content_type=content_type, object_id=product.id
         )
         if created:
-            self.cart.product.add(cart_product)
+            self.cart.products.add(cart_product)
+        self.cart.save()
+        return HttpResponseRedirect('/cart/')
+
+
+class DeleteFromCartView(CartMixin, View):
+    
+    def get(self, request, *args, **kwargs):
+        ct_model, product_slug = kwargs.get('ct_model'), kwargs.get('slug')
+        content_type = ContentType.objects.get(model=ct_model)
+        product = content_type.model_class().objects.get(slug=product_slug)
+        cart_product = CartProduct.objects.get(
+            user=self.cart.owner, cart=self.cart, content_type=content_type, object_id=product.id
+        )
+        self.cart.products.add(cart_product)
+        self.cart.save()
         return HttpResponseRedirect('/cart/')
 
 

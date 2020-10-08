@@ -16,7 +16,6 @@ class CartMixin(View):
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated:
             customer = Customer.objects.filter(user=request.user).first()
-            cart = Cart.objects.filter(owner=customer, in_order=False).first()
             if not customer:
                 customer = Customer.objects.create(
                     user=request.user

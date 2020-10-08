@@ -27,7 +27,7 @@ class LatestProductsManager:
             products.extend(model_products)
         if with_respect_to:
             ct_model = ContentType.objects.filter(model=with_respect_to)
-            if ct_model.exits():
+            if ct_model.exists():
                 if with_respect_to in args:
                     return sorted(
                         products, key=lambda x: x.__class__._meta.model_name.startswith(with_respect_to), reverse=True
@@ -83,6 +83,9 @@ class Product(models.Model):
 
     def __str__(self):
         return self.title
+
+    def get_model_name(self):
+        return self.__class__.__name__.lower()
 
 
 class Notebook(Product):
@@ -140,7 +143,7 @@ class CartProduct(models.Model):
 class Cart(models.Model):
 
     owner = models.ForeignKey('Customer', null=True, verbose_name='владелец', on_delete=models.CASCADE)
-    product = models.ManyToManyField(CartProduct, blank=True, related_name="related_cart")
+    products = models.ManyToManyField(CartProduct, blank=True, related_name="related_cart")
     total_products = models.PositiveIntegerField(default=0)
     final_price = models.DecimalField(max_digits=9, default=0, decimal_places=2, verbose_name="цена")
     in_order = models.BooleanField(default=False)
