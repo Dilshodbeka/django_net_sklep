@@ -160,3 +160,6 @@ class Customer(models.Model):
 
     def __str__(self):
         return "пользователь: {} {}".format(self.user.first_name, self.user.last_name)
+
+
+# class Order(models.Model):
